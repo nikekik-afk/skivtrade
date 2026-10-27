@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<title>Чек-лист трейдера</title>
+<style>
+:root{--bg:#0b0e11;--card:#181a20;--tx:#eaecef;--mut:#848e9c;--ac:#0ecb81;--y:#fcd535;--bd:#2b3139;--bad:#f6465d;--skv:#a855f7;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;padding:12px 12px 40px;max-width:560px;margin:auto}
+h1{font-size:20px;margin:6px 0 10px}h2{font-size:16px;margin:18px 0 8px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:12px;margin-bottom:10px}
+.tabs{display:flex;gap:6px;margin-bottom:10px}.tabs button{flex:1;padding:9px 2px;font-size:13px!important;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font-size:14px}
+.tabs button.on{background:var(--y);color:#181a20;border-color:var(--y);font-weight:600}
+.stats{display:flex;gap:8px}.stats div{flex:1;text-align:center}.stats b{display:block;font-size:22px;color:var(--y)}.stats span{font-size:12px;color:var(--mut)}
+.bar{height:8px;background:var(--bd);border-radius:6px;overflow:hidden;margin-top:10px}.bar i{display:block;height:100%;background:var(--y);width:0}
+.it{display:flex;gap:10px;align-items:flex-start;padding:10px 4px;border-bottom:1px solid var(--bd)}.it:last-child{border:0}
+.it input{width:22px;height:22px;margin-top:1px;accent-color:var(--y);flex:none}
+.it label{flex:1;font-size:15px}.it.done label{color:var(--mut);text-decoration:line-through}
+.it.disabled{opacity:.55;pointer-events:none}
+.rw{font-size:12px;color:var(--ac);white-space:nowrap}.hard .rw{font-weight:700}
+.rwskv{font-size:11px;color:var(--skv);white-space:nowrap;margin-left:2px}
+.rwbig{font-size:13px;color:var(--ac);font-weight:600;white-space:nowrap}
+input[type=number],input[type=text],textarea,select{width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit;margin:4px 0}
+.btn{width:100%;padding:12px;border:0;border-radius:8px;background:var(--y);color:#181a20;font-weight:600;font-size:16px;margin-top:6px}
+.btn.sec{background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.btn.danger{background:var(--bad);color:#fff}
+.btn.skv{background:var(--skv);color:#fff}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.mut{color:var(--mut);font-size:13px}.neg{color:var(--bad)}.pos{color:var(--ac)}.skvcol{color:var(--skv)}
+.log{padding:8px 0;border-bottom:1px solid var(--bd);font-size:14px}.log:last-child{border:0}
+svg{width:100%}
+.hidden{display:none}
+.mini{flex:none!important;width:auto!important;padding:8px 10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:8px;font-size:13px;margin:2px}.mini.on{background:var(--y);color:#181a20;border-color:var(--y)}.blk{border:1px solid var(--bd);border-radius:10px;padding:8px;margin-bottom:8px}
+#tmr{font-size:36px;font-weight:700;font-variant-numeric:tabular-nums;margin:4px 0}
+#tmr.off{color:var(--mut);opacity:.4}
+.led{font-size:12px;padding:6px 0;border-bottom:1px solid var(--bd)}.led:last-child{border:0}
+.led .amt{float:right;font-weight:600}.led .amt.pos{color:var(--ac)}.led .amt.neg{color:var(--bad)}.led .amt.skv{color:var(--skv)}
+.pnlwrap{display:flex;gap:6px;align-items:stretch}.pnlwrap input{flex:1}.signbtn{flex:none;width:48px;padding:0;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font-size:20px;font-weight:700}
+.devbar{text-align:center;margin-top:20px}
+.devbar button{background:transparent;border:1px dashed var(--bd);color:var(--mut);font-size:12px;padding:6px 10px;border-radius:8px}
+.ntbanner{background:rgba(14,203,129,.12);border:1px solid var(--ac);color:var(--ac);padding:10px;border-radius:8px;text-align:center;font-weight:600;margin-bottom:8px}
+.ntbanner.warn{background:rgba(246,70,93,.12);border-color:var(--bad);color:var(--bad)}
+.quotebox{margin-top:12px;padding:14px;background:linear-gradient(135deg,#1e2a1f,#181a20);border:1px solid var(--bd);border-radius:10px;font-style:italic;line-height:1.5}
+.quotebox .label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--mut);margin-bottom:6px;font-style:normal}
+.tcstage{border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;overflow:hidden}
+.tcstage-head{padding:10px 12px;background:var(--card);cursor:pointer;display:flex;justify-content:space-between;align-items:center;user-select:none}
+.tcstage-head b{font-size:14px}.tcstage-head .tog{color:var(--mut);font-size:12px}
+.tcstage-body{padding:8px 12px 12px;border-top:1px solid var(--bd);display:none}
+.tcstage.open .tcstage-body{display:block}
+.tcstage.open .tcstage-head{border-bottom:1px solid var(--bd);background:#1e2128}
+.chartblock{margin-bottom:10px}
+.periodbtns{display:flex;gap:4px;margin-bottom:6px}
+.periodbtns button{flex:1;padding:6px;font-size:12px;border:1px solid var(--bd);background:var(--card);color:var(--mut);border-radius:6px}
+.periodbtns button.on{background:var(--y);color:#181a20;border-color:var(--y);font-weight:600}
+.legend{font-size:11px;color:var(--mut);display:flex;gap:10px;margin-top:4px;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:3px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.skvcard{background:linear-gradient(135deg,#2a1a3e,#181a20);border:1px solid var(--skv);border-radius:8px;padding:12px;margin-bottom:10px}
+.skvcard h3{margin:0 0 8px;color:var(--skv);font-size:15px}
+.skvcard .num{font-size:28px;font-weight:700;color:var(--skv)}
+</style></head><body>
+<h1>Чек-лист трейдера</h1>
+<div class="tabs" id="tabs"></div>
+
+<div id="p0">
+ <div class="card" style="text-align:center"><div class="mut">Торговая сессия</div><div id="tmr">—</div>
+  <div id="tmrBtns"><button class="btn" id="tmrGo">Старт 2 ч</button><button class="mini" id="tmrCh">Изменить время</button><div class="mut" id="tmrNote"></div></div>
+  <button class="btn danger hidden" id="tmrStop">Закончить досрочно (Закроет день)</button></div>
+
+ <div class="card"><h2 style="margin-top:0">Всё по аккаунту</h2><div class="stats">
+  <div><b id="sToday">0 ₽</b><span>сегодня</span></div>
+  <div><b id="sBal">0 ₽</b><span>копилка</span></div>
+  <div><b id="sStreak">0</b><span>дней подряд</span></div></div>
+  <div class="mut" style="margin-top:8px;display:flex;justify-content:space-between"><span>PnL по сделкам:</span><b id="sPnl">0 $</b></div>
+  <div class="mut" style="display:flex;justify-content:space-between"><span>Баланс торгового счёта:</span><b id="sCap">0 $</b></div>
+  <div class="mut" style="display:flex;justify-content:space-between"><span class="skvcol">SKIVCOIN:</span><b id="sSkv" class="skvcol">0 SKV</b></div>
+  <div class="bar"><i id="bar"></i></div><div class="mut" id="cnt" style="margin-top:6px"></div></div>
+
+ <div class="card hidden" id="plaque"></div>
+ <div class="card" id="list"></div>
+ <button class="btn" id="closeDay">Подвести итог дня</button>
+ <button class="btn sec" id="noTrade">Сегодня не торгую — это тоже победа (+10 ₽ +20 SKV)</button>
+</div>
+
+<div id="p1" class="hidden">
+ <div class="card" id="capCard"><h2 style="margin-top:0">Мой торговый капитал</h2>
+  <div class="stats" style="margin-bottom:8px">
+   <div><b id="capBal" style="color:var(--tx)">0 $</b><span>баланс</span></div>
+   <div><b id="capPnl" style="color:var(--tx)">0 $</b><span>PnL</span></div>
+  </div>
+  <div class="row"><input id="capInit" type="number" step="0.01" placeholder="Начальный депозит, $"><button class="mini" id="capInitB">Задать</button></div>
+  <div class="row"><input id="capDep" type="number" step="0.01" placeholder="Пополнение, $"><button class="mini" id="capDepB">+</button></div>
+  <div class="row"><input id="capWd" type="number" step="0.01" placeholder="Вывод, $"><button class="mini" id="capWdB">−</button></div>
+  <div class="mut" id="capInfo" style="margin-top:4px"></div>
+ </div>
+
+ <div class="card"><div class="row" style="margin-bottom:8px"><h2 style="margin:0;flex:1">Чек-листы сделки</h2><button class="mini" id="tcEdit">✎ Изменить</button></div><div id="tcl"></div><button class="btn sec" id="tcReset">Новая сделка — сбросить все</button></div>
+ <div class="card"><h2 style="margin-top:0">Сделка</h2>
+  <div class="row"><select id="side"><option>Лонг</option><option>Шорт</option></select><input id="sym" type="text" placeholder="Монета"></div>
+  <div class="row">
+   <div class="pnlwrap"><input id="pnl" type="text" inputmode="decimal" placeholder="Итог, $ (+/−)" autocomplete="off"><button class="signbtn" id="pnlSign" type="button">±</button></div>
+   <div class="pnlwrap"><input id="risk" type="text" inputmode="decimal" placeholder="Риск по плану, $" autocomplete="off"><button class="signbtn" id="riskSign" type="button">±</button></div>
+  </div>
+  <div class="row"><select id="fs"><option value="1">Стоп не двигал</option><option value="0">Двигал стоп</option></select>
+  <select id="fr"><option value="1">Риск в лимите</option><option value="0">Превысил риск</option></select></div>
+  <select id="fe"><option value="1">Был сигнал по плану</option><option value="0">Вход без сигнала / реванш</option></select>
+  <h2>Эмоции</h2>
+  <select id="emoB"><option value="">До: что чувствовал?</option><option>Спокойствие</option><option>Азарт</option><option>FOMO</option><option>Злость</option><option>Скука</option><option>Страх</option><option>Желание отыграться</option></select>
+  <select id="emoA"><option value="">После: что чувствую?</option><option>Спокойствие</option><option>Радость</option><option>Досада</option><option>Злость</option><option>Облегчение</option><option>Пустота</option><option>Желание отыграться</option></select>
+  <textarea id="chg" rows="2" placeholder="Что могу изменить в следующий раз?"></textarea>
+  <button class="btn" id="addT">Сохранить сделку</button>
+  <div class="mut" style="margin-top:6px">Награда: +10 ₽ и +20 SKV за каждое соблюдённое правило. Штраф −20 ₽ / −40 SKV за торговлю в день «не торгую».</div></div>
+ <div class="card"><h2 style="margin-top:0">Сегодня</h2><div id="dayInfo"></div></div>
+ <div class="card"><h2 style="margin-top:0">Журнал</h2><div id="tlog"></div></div>
+</div>
+
+<div id="p2" class="hidden">
+ <div class="card"><h2 style="margin-top:0">Свечи по сделкам</h2>
+  <div class="periodbtns" id="perBtns">
+   <button data-p="today">Сегодня</button>
+   <button data-p="week">Неделя</button>
+   <button data-p="all" class="on">Все</button>
+  </div>
+  <svg id="chTrades" viewBox="0 0 340 200"></svg>
+  <div class="legend">
+   <span><i style="background:var(--ac)"></i>в плюс</span>
+   <span><i style="background:var(--bad)"></i>в минус</span>
+   <span><i style="background:#fcd535"></i>MA-5</span>
+  </div>
+  <div class="mut" id="tradesNote" style="margin-top:6px"></div>
+ </div>
+
+ <div class="card"><h2 style="margin-top:0">Свечи дисциплины</h2>
+  <svg id="chDisc" viewBox="0 0 340 200"></svg>
+  <div class="legend">
+   <span><i style="background:var(--ac)"></i>≥85%</span>
+   <span><i style="background:var(--bad)"></i>&lt;85%</span>
+   <span><i style="background:#848e9c"></i>DOJI («не торгую»)</span>
+   <span style="color:var(--mut)">фитиль = план</span>
+  </div>
+  <div class="mut" id="discNote" style="margin-top:6px"></div>
+ </div>
+
+ <div class="card"><h2 style="margin-top:0">Свечи PnL по дням</h2>
+  <svg id="chPnl" viewBox="0 0 340 200"></svg>
+  <div class="mut" id="pnlNote" style="margin-top:6px"></div>
+ </div>
+
+ <div class="card"><h2 style="margin-top:0">Эмоции в убыточных сделках</h2><div id="emoStat" class="mut"></div></div>
+ <div class="card"><h2 style="margin-top:0">Копилка</h2>
+  <div class="row"><input id="spend" type="number" placeholder="Потратить, ₽"><button class="btn" id="spendB" style="margin:4px 0">Потратить</button></div>
+  <div class="mut">Реальные деньги перекладывай сам: потратил — запиши сумму.</div></div>
+ <div class="card"><h2 style="margin-top:0">Проверка по API</h2>
+  <div class="mut">Сайт не может напрямую подключиться к бирже. Выгрузи историю сделок с биржи в CSV и вставь сюда.</div>
+  <textarea id="csv" rows="4" placeholder="Вставь строки: монета,итог_$ (по одной на строку)"></textarea>
+  <button class="btn sec" id="chk">Сверить с журналом</button><div id="chkRes" class="mut" style="margin-top:6px"></div></div>
+</div>
+
+<div id="p3" class="hidden">
+ <div class="skvcard"><h3>SKIVCOIN</h3>
+  <div class="num" id="wkSkv">0 SKV</div>
+  <div class="mut" id="skvRate" style="margin-top:4px"></div>
+ </div>
+ <div class="card" id="wkc"></div>
+ <div class="card"><h2 style="margin-top:0">Что хочу купить</h2><div id="wll"></div>
+  <div class="row"><input id="wn" type="text" placeholder="Название"><input id="wp" type="number" placeholder="Цена, ₽"></div><button class="btn" id="wadd">Добавить</button></div>
+ <div class="card"><h2 style="margin-top:0">Журнал операций</h2><div id="ledgerView" style="max-height:400px;overflow:auto"></div></div>
+ <div class="devbar"><button id="devOpen">⚙ Режим разработчика</button></div>
+</div>
+<div id="ov" class="hidden" style="position:fixed;inset:0;background:rgba(11,14,17,.94);z-index:50;overflow:auto;padding:12px"></div>
+<script>
+const tg=window.Telegram&&Telegram.WebApp;if(tg){try{tg.ready();tg.expand();tg.setHeaderColor('#0b0e11');tg.setBackgroundColor('#0b0e11')}catch(e){}}
+const CS=tg&&tg.CloudStorage;let ctm;
+function cloudSet(){if(!CS)return;clearTimeout(ctm);ctm=setTimeout(()=>{try{const j=JSON.stringify(window.__S),n=Math.ceil(j.length/3500);CS.setItem('n',String(n));for(let i=0;i<n;i++)CS.setItem('p'+i,j.slice(i*3500,(i+1)*3500))}catch(e){}},800)}
+
+const DEV_PASS='sk2024';
+const NT_PENALTY=20, NT_PENALTY_SKV=40;
+const SKV_PER_RUB=2;
+
+const QUOTES_WIN=["Дисциплина — это не ограничение, а свобода. Ты уже это доказал.","Один хороший день — не результат. Но десять таких — уже система.","Профи не тот, кто всегда в плюсе, а тот, кто не теряет контроль.","Ты сделал свою работу. Рынок сделает свою.","Прибыль — побочный продукт процесса. Процесс у тебя сегодня был.","Спокойный трейдер — опасный трейдер. Ты сегодня был спокойным.","Не гонись за рынком. Пусть рынок придёт к твоему плану.","Сегодня ты заработал не деньги, а доверие к себе.","Каждый дисциплинированный день — кирпич в фундамент капитала.","Ты не торговал — ты работал. Это разные вещи."];
+const QUOTES_LOSS=["Убыток — это не провал. Провал — это нарушить собственный план.","Минус на счёте — это цена обучения. Ты купил опыт, а не потерял деньги.","Профессионалы теряют чаще любителей. Разница — в размере потерь.","Сегодня ты потерял деньги, но сохранил систему. Завтра система вернёт.","Один убыточный день ничего не значит в масштабе года.","Убыток, принятый по плану, — это победа. Убыток, скрытый от себя, — провал.","Рынок заплатил тебе за урок. Возьми его, не отказывайся.","Самые сильные трейдеры — те, кто пережил серию убытков и не сломался.","Минус — это не приговор. Это просто строка в статистике.","Убыток — нормальная часть процесса. Ненормально — не остановиться."];
+const QUOTES_NEUTRAL=["День без сделок — тоже результат. Ты сохранил капитал.","Иногда лучший трейд — это отсутствие трейда.","Ты не заработал — но и не потерял. Это тоже навык.","Рынок сегодня не дал сигнала. Ты не стал его выдумывать. Молодец.","Скука на рынке — признак зрелости. Ты научился ждать.","Ноль — это не пустота, это сохранённый потенциал.","Хороший трейдер умеет не торговать. Ты сегодня это доказал.","Терпение — самый недооценённый навык на рынке. У тебя он растёт.","Ты не обязан быть в рынке каждый день. И сегодня не был.","Ничего не сделать — иногда самое сложное решение. Ты его принял."];
+const QUOTES_LIMIT=["Ты остановился, когда достиг лимита. Это и есть профессионализм.","Умение вовремя закрыть терминал — дороже любого сетапа.","Большинство теряет всё именно после лимита. Ты не из них.","Лимит — это не наказание, а защита от тебя самого. Ты её уважаешь.","Остановиться сложнее, чем начать. Сегодня ты сделал сложное.","Один день — не конец игры. Ты сохранил будущее.","Дисциплина — это уважение к своим же правилам. Ты его проявил.","Ты остановился на своих условиях, а не на условиях рынка.","Завтра будет новый день. Сегодня ты ушёл вовремя.","Остановка — не слабость. Это сила воли."];
+const QUOTES_NOTRADE=["Сегодня лучший трейд — это не торговать. Ты его совершил.","Отказ от торговли — тоже решение. И часто — самое мудрое.","Ты сохранил деньги и нервы. Это тоже прибыль.","Скучный день на рынке — безопасный день для счёта.","Не каждая сессия должна быть прибыльной. Каждая должна быть разумной.","Ты не торговал — и это была осознанная работа. Молодец.","Наблюдение за рынком — тоже тренировка. Ты сегодня тренировался.","Рынок никуда не денется. Твоё терпение — тоже.","Профи не чувствуют вины за пропущенный день. И ты не чувствуй.","Хороший день, когда ты не потерял. Это факт."];
+const QUOTES_VIOLATE=["Ты нарушил собственное решение. Это не конец, это урок.","Дисциплина — это когда сказал «не торгую» и не торговал. Завтра попробуй снова.","Штраф — это не наказание. Это напоминание, что слово должно быть твёрдым.","Каждый срыв — это данные. Что триггернуло? Запиши и иди дальше.","Проиграл день — не проиграл систему. Возвращайся к плану.","Слабость сегодня — сила завтра, если сделать вывод.","−20 ₽ — дёшево за урок. Некоторые платят депозитом.","Ты не первый и не последний, кто сорвался. Важно — что дальше.","Один срыв не обнуляет всё. Продолжай.","Нарушил — зафиксировал — вернулся в план. Это и есть работа."];
+function pickQuote(a){return a[Math.floor(Math.random()*a.length)]}
+
+function boot(INIT){
+
+const ITEMS=[
+"Открыл терминал и проверил подключение.","Проверил баланс, открытые позиции и активные ордера.","Записал дневной лимит: +$10 / −$10.","Проверил комиссии и размер шага цены на выбранных контрактах.","Убедился, что сегодня нет желания отыграться.","Убедился, что не торгую из-за злости, скуки или FOMO.","Отобрал ликвидные активы по своему фильтру от 500k.","Убрал монеты с плохим спредом и тонким стаканом.","Выбрал кандидатов на пробой.","Выбрал кандидатов на отскок.","Отметил ключевые уровни на графике.","Проверил, не находится ли цена прямо перед сильным встречным уровнем.","Проверил объём и активность торгов.","Проверил структуру рынка и направление старшего таймфрейма.","Установил уведомления на выбранные уровни.","Записал условия входа для каждого кандидата.","Заранее определил, что отменит сценарий.","Проверил, что сетап соответствует моим правилам.","Рассчитал стоп и размер позиции до входа.","Учёл плечо, комиссии и возможное проскальзывание.","Убедился, что риск сделки не превышает установленный лимит.","Проверил, что потенциальная прибыль оправдывает риск.","Определил тейк-профит и план частичного закрытия, если он предусмотрен.","Проверил, нет ли уже позиции в том же направлении по коррелирующей монете.","Убедился, что не вхожу вслед за уже ушедшей ценой.","Проверил, что не пытаюсь угадать разворот без подтверждения.","Подготовил план действий, если цена пойдёт против меня.","Убедился, что после стопа не буду немедленно перезаходить без нового сигнала.","Открыл журнал сделок.","Разрешил себе сегодня не торговать, если нет качественных входов."];
+const HARD=new Set([4,5,20,24,25,27]);
+const rw=i=>{const it=allItems().find(x=>x.id===i);return it?(it.hard?10:1):(HARD.has(i)?10:1)};
+const day=()=>new Date().toISOString().slice(0,10);
+let S={days:{},trades:[],spent:0,bonus:0,ledger:[],cap:{init:0,dep:0,wd:0},ver:3,cfg:{}};
+try{S=Object.assign(S,JSON.parse(INIT||'{}'))}catch(e){}
+S.cfg=S.cfg||{};
+if(S.cfg.skvPerRub==null)S.cfg.skvPerRub=SKV_PER_RUB;
+if(S.cfg.skvBaseRate==null)S.cfg.skvBaseRate=1;
+if(S.cfg.targetDiscipline==null)S.cfg.targetDiscipline=85;
+
+S.ledger=S.ledger||[];
+let lid=S.ledger.reduce((m,l)=>Math.max(m,l.id||0),0);
+function addLed(type,amount,ref,comment,currency){
+ const rec={id:++lid,ts:Date.now(),day:day(),type,amount,currency:currency||'RUB',ref:ref||'',comment:comment||''};
+ S.ledger.push(rec);return rec;
+}
+function hasLed(ref){return S.ledger.some(l=>l.ref===ref)}
+function sumLed(filter){return S.ledger.filter(filter).reduce((a,l)=>a+l.amount,0)}
+
+window.__S=S;const save=()=>{S.ts=Date.now();try{localStorage.setItem('tc',JSON.stringify(S))}catch(e){};cloudSet()};
+const D=()=>S.days[day()]||(S.days[day()]={c:[],nt:0});
+const $=id=>document.getElementById(id);
+
+function totalRUB(){return sumLed(l=>l.currency==='RUB')}
+function todayRUB(){return sumLed(l=>l.day===day()&&l.currency==='RUB')}
+function totalSKV(){return sumLed(l=>l.currency==='SKV')}
+function todaySKV(){return sumLed(l=>l.day===day()&&l.currency==='SKV')}
+function weekStartRUB(){const d=new Date();const dow=(d.getDay()+6)%7;const ws=new Date(d);ws.setDate(d.getDate()-dow);return ws.toISOString().slice(0,10)}
+function weekRUB(){const ws=weekStartRUB();return sumLed(l=>l.day>=ws&&l.currency==='RUB')}
+function weekSpentRUB(){const ws=weekStartRUB();return -sumLed(l=>l.day>=ws&&l.type==='spend'&&l.currency==='RUB')}
+function totalSpentRUB(){return -sumLed(l=>l.type==='spend'&&l.currency==='RUB')}
+
+function todayPnl(){return S.trades.filter(t=>t.d===day()).reduce((a,t)=>a+t.pnl,0)}
+function allPnl(){return S.trades.reduce((a,t)=>a+t.pnl,0)}
+function capBal(){return (S.cap.init||0)+(S.cap.dep||0)-(S.cap.wd||0)+allPnl()}
+function skvRate(){
+ const init=S.cap.init||0;const bal=capBal();
+ if(init<=0)return S.cfg.skvBaseRate||1;
+ const growth=(bal/init)-1;
+ return (S.cfg.skvBaseRate||1)*(1+growth*0.5);
+}
+function streak(){let n=0,d=new Date();for(;;){const k=d.toISOString().slice(0,10);const x=S.days[k];if(x&&x.c.length>=0.85*(x.n||30))n++;else if(k!==day())break;d.setDate(d.getDate()-1)}return n}
+const names=["Чек-лист","Сделки","Статистика","Копилка"];
+names.forEach((n,i)=>{const b=document.createElement('button');b.textContent=n;b.onclick=()=>show(i);$('tabs').appendChild(b)});
+function show(i){for(let j=0;j<4;j++){$('p'+j).classList.toggle('hidden',j!==i);$('tabs').children[j].classList.toggle('on',j===i)}if(i===2)stats();if(i===1){tr();capDraw();tcDraw()}if(i===3){wk();wlDraw();ledDraw();skvCard()}}
+
+function capDraw(){$('capInit').value=S.cap.init||'';$('capBal').textContent=capBal().toFixed(2)+' $';
+ const p=allPnl();$('capPnl').textContent=(p>=0?'+':'')+p.toFixed(2)+' $';$('capPnl').style.color=p<0?'var(--bad)':(p>0?'var(--ac)':'var(--tx)');
+ $('capInfo').innerHTML='Депозит: '+(S.cap.init||0)+' $ · пополнено: '+(S.cap.dep||0)+' $ · выведено: '+(S.cap.wd||0)+' $';
+ const el=$('sCap');if(el)el.textContent=capBal().toFixed(2)+' $';
+ const pe=$('sPnl');if(pe){pe.textContent=(p>=0?'+':'')+p.toFixed(2)+' $';pe.style.color=p<0?'var(--bad)':(p>0?'var(--ac)':'var(--mut)')}
+ const se=$('sSkv');if(se)se.textContent=totalSKV()+' SKV';
+}
+$('capInitB').onclick=()=>{const v=parseFloat($('capInit').value);if(isNaN(v))return;S.cap.init=v;save();capDraw()};
+$('capDepB').onclick=()=>{const v=parseFloat($('capDep').value);if(!(v>0))return;S.cap.dep=(S.cap.dep||0)+v;addLed('cap_dep',0,'capdep'+Date.now(),'Пополнение депозита '+v+' $');$('capDep').value='';save();capDraw()};
+$('capWdB').onclick=()=>{const v=parseFloat($('capWd').value);if(!(v>0))return;S.cap.wd=(S.cap.wd||0)+v;addLed('cap_wd',0,'capwd'+Date.now(),'Вывод '+v+' $');$('capWd').value='';save();capDraw()};
+
+function parseNum(s){if(s==null)return NaN;s=String(s).trim().replace(/[−–—]/g,'-').replace(/,/g,'.').replace(/\s+/g,'');if(!s||s==='-')return NaN;const v=parseFloat(s);return isNaN(v)?NaN:v}
+function toggleSign(id){const el=$(id);let v=el.value.trim();if(!v){el.value='-';return}v=v.replace(/[−–—]/g,'-');if(v.startsWith('-'))el.value=v.slice(1);else el.value='-'+v}
+$('pnlSign').onclick=()=>toggleSign('pnl');
+$('riskSign').onclick=()=>toggleSign('risk');
+
+$('noTrade').onclick=()=>{
+ const d=D();const ref='nt_'+day(),refSkv='ntskv_'+day();
+ if(d.nt){
+  d.nt=0;
+  d.closed=0;
+  d._ntWasClosed=0;
+  ['nt_','ntskv_','ntviol_','ntviolskv_'].forEach(p=>{
+   const r=p+day();
+   let i;
+   while((i=S.ledger.findIndex(l=>l.ref===r))>=0)S.ledger.splice(i,1);
+  });
+  save();
+  draw();
+  tmUI();
+  run();
+ } else {
+  const tradesToday=S.trades.filter(t=>t.d===day());
+  const applyNow=()=>{
+   d.nt=1;
+   if(!hasLed(ref))addLed('day_notrade',10,ref,'День без торговли');
+   if(!hasLed(refSkv))addLed('day_notrade_skv',20,refSkv,'SKV за день без торговли','SKV');
+   d._ntWasClosed=1;d.closed=1;d.c=[];d.ok=0;
+   if(tradesToday.length>0&&!hasLed('ntviol_'+day())){
+    addLed('nt_violation',-NT_PENALTY,'ntviol_'+day(),'Штраф: торговал в день «не торгую»');
+    addLed('nt_violation_skv',-NT_PENALTY_SKV,'ntviolskv_'+day(),'SKV штраф: торговал в день «не торгую»','SKV');
+   }
+   S.end=0;clearInterval(tInt);
+   save();draw();run();
+   showDaySummary(true,tradesToday.length>0);
+  };
+  if(tradesToday.length>0){
+   ask('У тебя уже есть сделки сегодня ('+tradesToday.length+' шт).<br><br>Если выберешь «не торгую», будет штраф <b>−'+NT_PENALTY+' ₽</b> и <b>−'+NT_PENALTY_SKV+' SKV</b>, и день закроется как «без торговли». Всё равно?',applyNow);
+  } else applyNow();
+ }
+};
+
+$('addT').onclick=()=>{
+ const pnl=parseNum($('pnl').value);if(isNaN(pnl))return alert('Укажи итог сделки в $');
+ const d=D();
+ const ok=['fs','fr','fe'].map(k=>+$(k).value);let earn=ok.reduce((a,b)=>a+b*10,0);
+ const after=todayPnl()+pnl;if(todayPnl()<=-10||todayPnl()>=10)earn-=5;
+ const tid='trade_'+day()+'_'+Date.now();
+ if(earn>0)addLed('trade_reward',earn,tid,'Награда за сделку '+($('sym').value||'—'));
+ if(earn<0)addLed('trade_penalty',earn,tid,'Штраф: выход за лимит');
+ const okCount=ok.filter(x=>x===1).length;
+ const skvReward=okCount*10;
+ if(skvReward>0)addLed('trade_reward_skv',skvReward,tid+'_skv','SKV за сделку '+($('sym').value||'—'),'SKV');
+ if(d.nt&&!hasLed('ntviol_'+day())){
+  addLed('nt_violation',-NT_PENALTY,'ntviol_'+day(),'Штраф: торговал в день «не торгую»');
+  addLed('nt_violation_skv',-NT_PENALTY_SKV,'ntviolskv_'+day(),'SKV штраф: торговал в день «не торгую»','SKV');
+ }
+ S.trades.push({d:day(),sym:$('sym').value||'—',side:$('side').value,pnl,risk:parseNum($('risk').value)||0,ok,eb:$('emoB').value,ea:$('emoA').value,chg:$('chg').value,earn,tid});
+ ['pnl','risk','sym','chg'].forEach(k=>$(k).value='');save();tr();draw();capDraw();
+ if(d.nt)setTimeout(()=>{
+  showOv('<h2 style="margin-top:0">⚠️ Нарушение</h2><div class="mut">Ты сегодня решил не торговать, но сохранил сделку. Штраф −'+NT_PENALTY+' ₽ и −'+NT_PENALTY_SKV+' SKV.</div><div class="quotebox"><div class="label">Мысль</div>'+pickQuote(QUOTES_VIOLATE)+'</div><button class="btn" id="vOk">Понятно</button>');
+  $('vOk').onclick=hideOv;
+ },150);
+ else if(after<=-10)alert('Дневной лимит −$10 достигнут. На сегодня стоп.');else if(after>=10)alert('Дневной лимит +$10 достигнут. Закрой терминал.');
+};
+function tr(){const p=todayPnl();$('dayInfo').innerHTML='Итог дня: <b class="'+(p<0?'neg':'pos')+'">'+(p>=0?'+':'')+p.toFixed(2)+' $</b> из лимита ±10 $'+((p<=-10||p>=10)?'<div class="neg"><b>Лимит достигнут — не торгуй.</b></div>':'');
+ $('tlog').innerHTML=S.trades.length?S.trades.slice().reverse().slice(0,30).map(t=>'<div class="log"><b>'+t.sym+'</b> '+t.side+' · <span class="'+(t.pnl<0?'neg':'pos')+'">'+t.pnl+' $</span> · +'+t.earn+' ₽<br><span class="mut">'+t.d+(t.eb?' · до: '+t.eb:'')+(t.ea?' · после: '+t.ea:'')+(t.ok.includes(0)?' · нарушено правил: '+t.ok.filter(x=>!x).length:'')+'</span>'+(t.chg?'<div class="mut">Изменить: '+t.chg.replace(/</g,'&lt;')+'</div>':'')+'</div>').join(''):'<div class="mut">Пока пусто</div>'}
+$('spendB').onclick=()=>{const v=parseInt($('spend').value);if(v>0){addLed('spend',-v,'sp'+Date.now(),'Трата вручную');$('spend').value='';save();draw();alert('Списано '+v+' ₽')}};
+$('chk').onclick=()=>{const rows=$('csv').value.trim().split('\n').map(l=>l.split(/[,;\t]/)).filter(r=>r.length>=2);
+ if(!rows.length)return;const ex=rows.reduce((a,r)=>a+parseFloat(r[1]||0),0),me=todayPnl();const diff=Math.abs(ex-me);
+ $('chkRes').innerHTML='Биржа: '+ex.toFixed(2)+' $ · журнал: '+me.toFixed(2)+' $<br>'+(diff<0.05?'<span class="pos">Совпадает ✓ (+10 ₽)</span>':'<span class="neg">Расхождение '+diff.toFixed(2)+' $ — записал не всё.</span>');
+ if(diff<0.05&&!hasLed('ver_'+day())){D().ver=1;addLed('day_verify',10,'ver_'+day(),'Сверка с биржей');save();draw()}};
+
+let periodMode='all';
+
+function drawTradesChart(){
+ const el=$('chTrades');
+ const todayD=day();
+ let trades=[...S.trades].sort((a,b)=>(a.d+a.tid).localeCompare(b.d+b.tid));
+ if(periodMode==='today')trades=trades.filter(t=>t.d===todayD);
+ else if(periodMode==='week'){const ws=weekStartRUB();trades=trades.filter(t=>t.d>=ws)}
+ if(!trades.length){el.innerHTML='<text x="170" y="100" text-anchor="middle" fill="#848e9c" font-size="11">Пока нет сделок</text>';$('tradesNote').textContent='Добавь сделки — появится график.';return}
+ const init=S.cap.init||0;
+ let bal=init;
+ const candles=[];
+ trades.forEach(t=>{const o=bal;bal+=t.pnl;candles.push({o,c:bal,pnl:t.pnl,sym:t.sym,d:t.d})});
+ const ma=[];
+ for(let i=0;i<candles.length;i++){
+  const from=Math.max(0,i-4);
+  let s=0,n=0;
+  for(let j=from;j<=i;j++){s+=candles[j].c;n++}
+  ma.push(s/n);
+ }
+ const W=340,H=200,padL=45,padR=10,padT=15,padB=30;
+ const plotW=W-padL-padR,plotH=H-padT-padB;
+ const allVals=[...candles.map(x=>x.o),...candles.map(x=>x.c),...ma,init];
+ let mx=Math.max(...allVals),mn=Math.min(...allVals);
+ if(mx===mn){mx+=1;mn-=1}
+ const pad=(mx-mn)*0.1;mx+=pad;mn-=pad;
+ const Y=v=>padT+(mx-v)/(mx-mn)*plotH;
+ const sl=plotW/candles.length;
+ const cw=Math.max(3,Math.min(16,sl*0.6));
+ let s='';
+ for(let i=0;i<5;i++){
+  const v=mn+(mx-mn)*i/4;
+  const y=Y(v);
+  s+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+y+'" y2="'+y+'" stroke="#2b3139" stroke-width="0.5"/>';
+  s+='<text x="'+(padL-4)+'" y="'+(y+3)+'" text-anchor="end" fill="#848e9c" font-size="9">'+v.toFixed(0)+'</text>';
+ }
+ let maPath='';
+ ma.forEach((v,i)=>{const cx=padL+i*sl+sl/2;maPath+=(i===0?'M':'L')+cx+','+Y(v)});
+ s+='<path d="'+maPath+'" fill="none" stroke="#fcd535" stroke-width="1.5" opacity="0.85"/>';
+ candles.forEach((c,i)=>{
+  const cx=padL+i*sl+sl/2;
+  const col=c.c>=c.o?'var(--ac)':'var(--bad)';
+  const yO=Y(c.o),yC=Y(c.c);
+  const top=Math.min(yO,yC),h=Math.max(2,Math.abs(yO-yC));
+  s+='<rect x="'+(cx-cw/2)+'" y="'+top+'" width="'+cw+'" height="'+h+'" rx="1" fill="'+col+'"/>';
+ });
+ el.innerHTML=s;
+ const last=candles[candles.length-1];
+ const start=init;
+ const now=last.c;
+ const pct=init>0?((now-init)/init*100):0;
+ const best=Math.max(...candles.map(x=>x.c));
+ const worst=Math.min(...candles.map(x=>x.c));
+ $('tradesNote').innerHTML='Сделок: '+candles.length+' · Старт: <b>'+start.toFixed(0)+'$</b> → Сейчас: <b class="'+(now>=init?'pos':'neg')+'">'+now.toFixed(2)+'$</b> ('+(pct>=0?'+':'')+pct.toFixed(1)+'%)<br><span class="mut">Лучший: '+best.toFixed(2)+'$ · Худший: '+worst.toFixed(2)+'$</span>';
+}
+$('perBtns').addEventListener('click',e=>{
+ const p=e.target.dataset.p;if(!p)return;
+ periodMode=p;
+ $('perBtns').querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+ drawTradesChart();
+});
+
+function drawDiscChart(){
+ const el=$('chDisc');
+ const ks=Object.keys(S.days).sort().slice(-14);
+ if(!ks.length){el.innerHTML='<text x="170" y="100" text-anchor="middle" fill="#848e9c" font-size="11">Пока нет данных</text>';$('discNote').textContent='';return}
+ const candles=ks.map(k=>{
+  const d=S.days[k];
+  const done=d.c?d.c.length:0;
+  const plan=d.n||allItems().length||30;
+  const nt=!!d.nt;
+  return {k,done,plan,nt,closed:!!d.closed}
+ });
+ const W=340,H=200,padL=25,padR=10,padT=15,padB=25;
+ const plotW=W-padL-padR,plotH=H-padT-padB;
+ const maxPlan=Math.max(...candles.map(x=>x.plan));
+ const Y=v=>padT+(maxPlan-v)/Math.max(1,maxPlan)*plotH;
+ const sl=plotW/candles.length;
+ const cw=Math.max(4,Math.min(16,sl*0.65)); // Чуть шире для крестика
+ 
+ let s='';
+ [0,25,50,75,100].forEach(p=>{
+  const y=Y(maxPlan*p/100);
+  s+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+y+'" y2="'+y+'" stroke="#2b3139" stroke-width="0.5"/>';
+  s+='<text x="'+(padL-3)+'" y="'+(y+3)+'" text-anchor="end" fill="#848e9c" font-size="9">'+p+'%</text>';
+ });
+ candles.forEach((c,i)=>{
+  const cx=padL+i*sl+sl/2;
+  
+  // РИСУЕМ ДОДЖИ (КРЕСТИК)
+  if(c.nt){
+   const cyMid=Y(maxPlan*0.5); // Центр
+   // Вертикальная линия
+   s+='<line x1="'+cx+'" x2="'+cx+'" y1="'+(cyMid-cw)+'" y2="'+(cyMid+cw)+'" stroke="#eaecef" stroke-width="2"/>';
+   // Горизонтальная линия
+   s+='<line x1="'+(cx-cw/2)+'" x2="'+(cx+cw/2)+'" y1="'+cyMid+'" y2="'+cyMid+'" stroke="#eaecef" stroke-width="2"/>';
+   // Подпись
+   s+='<text x="'+cx+'" y="'+(H-padB+12)+'" text-anchor="middle" fill="#848e9c" font-size="8">DOJI</text>';
+   return;
+  }
+  
+  // ОБЫЧНАЯ СВЕЧА
+  const pct=c.plan>0?c.done/c.plan:0;
+  const isGreen=pct>=S.cfg.targetDiscipline/100;
+  const col=isGreen?'var(--ac)':'var(--bad)';
+  const y0=Y(0);
+  const yDone=Y(c.done);
+  const yPlan=Y(c.plan);
+  if(c.done<c.plan){
+   s+='<line x1="'+cx+'" x2="'+cx+'" y1="'+yDone+'" y2="'+yPlan+'" stroke="'+col+'" stroke-width="1.5"/>';
+  }
+  const top=Math.min(y0,yDone),h=Math.max(2,Math.abs(y0-yDone));
+  s+='<rect x="'+(cx-cw/2)+'" y="'+top+'" width="'+cw+'" height="'+h+'" rx="1" fill="'+col+'"/>';
+ });
+ el.innerHTML=s;
+ const last=candles[candles.length-1];
+ if(last.nt){$('discNote').textContent='Последний день — DOJI («не торгую»). Отдых — тоже дисциплина.'}
+ else{const pct=last.plan>0?Math.round(last.done/last.plan*100):0;$('discNote').textContent='Последний день: '+last.done+'/'+last.plan+' ('+pct+'%) · фитиль = план'}
+}
+
+function drawPnlChart(){
+ const el=$('chPnl');
+ const by={};S.trades.forEach(t=>{(by[t.d]=by[t.d]||[]).push(t.pnl)});
+ const ds=Object.keys(by).sort().slice(-14);
+ if(!ds.length){el.innerHTML='<text x="170" y="100" text-anchor="middle" fill="#848e9c" font-size="11">Пока нет сделок</text>';$('pnlNote').textContent='';return}
+ let all=0;S.trades.forEach(t=>{if(t.d<ds[0])all+=t.pnl});let cum=all;const cs=[];
+ ds.forEach(d=>{const o=cum;let h=o,l=o;by[d].forEach(p=>{cum+=p;h=Math.max(h,cum);l=Math.min(l,cum)});cs.push({d,o,c:cum,h,l})});
+ const W=340,H=200,padL=45,padR=10,padT=15,padB=25;
+ const plotW=W-padL-padR,plotH=H-padT-padB;
+ let mx=Math.max(...cs.map(x=>x.h)),mn=Math.min(...cs.map(x=>x.l));if(mx===mn){mx+=1;mn-=1}const pad=(mx-mn)*0.08;mx+=pad;mn-=pad;
+ const Y=v=>padT+(mx-v)/(mx-mn)*plotH;
+ const sl=plotW/cs.length;const cw=Math.max(3,Math.min(16,sl*0.6));
+ let s='';
+ for(let i=0;i<5;i++){
+  const v=mn+(mx-mn)*i/4;const y=Y(v);
+  s+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+y+'" y2="'+y+'" stroke="#2b3139" stroke-width="0.5"/>';
+  s+='<text x="'+(padL-4)+'" y="'+(y+3)+'" text-anchor="end" fill="#848e9c" font-size="9">'+v.toFixed(0)+'</text>';
+ }
+ if(mn<0&&mx>0)s+='<line x1="'+padL+'" x2="'+(W-padR)+'" y1="'+Y(0)+'" y2="'+Y(0)+'" stroke="#848e9c" stroke-dasharray="3"/>';
+ cs.forEach((x,i)=>{
+  const cx=padL+i*sl+sl/2;
+  const col=x.c>=x.o?'var(--ac)':'var(--bad)';
+  s+='<line x1="'+cx+'" x2="'+cx+'" y1="'+Y(x.h)+'" y2="'+Y(x.l)+'" stroke="'+col+'" stroke-width="1.5"/>';
+  const yO=Y(x.o),yC=Y(x.c);
+  const top=Math.min(yO,yC),h=Math.max(2,Math.abs(yO-yC));
+  s+='<rect x="'+(cx-cw/2)+'" y="'+top+'" width="'+cw+'" height="'+h+'" rx="1" fill="'+col+'"/>';
+ });
+ el.innerHTML=s;
+ const last=cs[cs.length-1];
+ $('pnlNote').textContent='Нарастающий итог. Сейчас: '+(last.c>=0?'+':'')+last.c.toFixed(2)+' $';
+}
+
+function stats(){
+ drawTradesChart();drawDiscChart();drawPnlChart();
+ const cnt={};S.trades.filter(t=>t.pnl<0).forEach(t=>{const e=t.eb||'не указано';cnt[e]=(cnt[e]||0)+1});
+ $('emoStat').innerHTML=Object.keys(cnt).length?Object.entries(cnt).sort((a,b)=>b[1]-a[1]).map(([e,n])=>e+': '+n).join('<br>'):'Данных пока нет';
+}
+
+let tInt;
+function fmt(ms){const s=Math.max(0,Math.ceil(ms/1000));return String(Math.floor(s/3600)).padStart(2,'0')+':'+String(Math.floor(s%3600/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+
+function tick(){
+ const el=$('tmr');
+ const d=D();
+ const ntBlocked=!!d.nt;
+ const on=!!S.end&&!ntBlocked;
+ // блок "Старт/Изменить" показываем, только если таймер не идёт и не "не торгую"
+ $('tmrBtns').classList.toggle('hidden',on||ntBlocked);
+ $('tmrStop').classList.toggle('hidden',!on);
+ el.classList.toggle('off',ntBlocked);
+ if(ntBlocked){el.textContent='—';return}
+ if(!on){el.textContent='—';return}
+ const left=S.end-Date.now();
+ if(left<=0){
+  S.end=0;save();clearInterval(tInt);
+  el.textContent='00:00:00';
+  tmUI();
+  try{navigator.vibrate&&navigator.vibrate([300,150,300])}catch(e){}
+  setTimeout(openClose,300);
+  return;
+ }
+ el.textContent=fmt(left);
+ el.style.color=left<600000?'var(--bad)':'';
+}
+function run(){clearInterval(tInt);tick();tInt=setInterval(tick,1000)}
+function tmH(){if(S.tmDay!==day()){S.tmH=2;S.tmDay=day()}return S.tmH}
+
+function tmUI(){
+ const u=S.tmChg===day();
+ const d=D();
+ const ntBlocked=!!d.nt;
+ const running=!!S.end;
+ $('tmrGo').textContent='Старт '+tmH()+' ч';
+ // "Изменить" видна только если время ещё не фиксировали, таймер не идёт и не "не торгую"
+ $('tmrCh').classList.toggle('hidden',u||running||ntBlocked);
+ $('tmrNote').textContent=u?'🔒 Время на сегодня зафиксировано (старт доступен)':'Время можно изменить один раз до старта';
+ // принудительно синхронизируем видимость кнопок
+ $('tmrBtns').classList.toggle('hidden',running||ntBlocked);
+ $('tmrStop').classList.toggle('hidden',!running);
+}
+
+$('tmrGo').onclick=()=>{
+ const d=D();
+ if(d.closed){ // ЗАЩИТА ОТ ЗАПУСКА ПОСЛЕ ДОСРОЧНОГО ЗАКРЫТИЯ
+  showOv('<h2 style="margin-top:0">День закрыт</h2><div class="mut">Вы уже завершили торговлю сегодня. Запустить таймер снова нельзя.</div><button class="btn" id="thOk">Понятно</button>');
+  $('thOk').onclick=hideOv;
+  return;
+ }
+ if(d.nt){
+  showOv('<h2 style="margin-top:0">Нельзя</h2><div class="mut">На сегодня вы решили не торговать. Не нарушайте дисциплину.</div><button class="btn" id="thOk">Понятно</button>');
+  $('thOk').onclick=hideOv;
+  return;
+ }
+ if(S.end){
+  showOv('<h2 style="margin-top:0">Таймер уже идёт</h2><div class="mut">Осталось: '+fmt(S.end-Date.now())+'</div><button class="btn" id="tgOk">Понятно</button>');
+  $('tgOk').onclick=hideOv;
+  return;
+ }
+ const go=()=>{S.end=Date.now()+tmH()*3600000;
+ S.lock=day();
+ S.tmChg=day();
+ ed=false;
+ save();
+ run();
+ draw();
+ tmUI();};
+ if(S.lock!==day())ask('После старта таймера чек-лист на сегодня нельзя будет менять. Начать?',go);else go();
+};
+
+/* === ДОСРОЧНОЕ ЗАВЕРШЕНИЕ (ЗАКРЫВАЕТ ДЕНЬ) === */
+$('tmrStop').onclick=()=>{
+ ask('Завершить торговую сессию досрочно?<br><br><b>Внимание:</b> Это закроет торговый день. Чек-лист заблокируется, и запустить таймер снова сегодня будет нельзя.',()=>{
+  const d=D();
+  
+  // БЛОКИРУЕМ ДЕНЬ НАМЕРТВО
+  d.closed=1;
+  d.ok=d.c.length;
+  d.n=allItems().length;
+  S.end=0;
+  clearInterval(tInt);
+  
+  // Начисляем награды за то, что успел сделать
+  const okIds=d.c.filter(i=>allItems().some(x=>x.id===i));
+  const earned=okIds.reduce((a,i)=>a+rw(i),0);
+  const ref='close_'+day(),refSkv='closeskv_'+day();
+  if(!hasLed(ref)){
+   if(earned>0)addLed('day_checklist',earned,ref,'Чек-лист за '+day()+' (досрочно)');
+   const skv=earned*S.cfg.skvPerRub;
+   if(skv>0)addLed('day_checklist_skv',skv,refSkv,'SKV за чек-лист','SKV');
+  }
+  
+  save();
+  draw();
+  tmUI();
+  run();
+  setTimeout(()=>showDaySummary(false,false),200);
+ });
+};
+
+$('tmrCh').onclick=()=>{
+ if(S.tmChg===day())return;
+ const d=D();if(d.nt)return;
+ const cur=tmH();
+ const opts=[0.5,1,1.5,2,3,4,5,6].map(v=>'<button class="mini'+(v===cur?' on':'')+'" data-th="'+v+'">'+v+' ч</button>').join('');
+ showOv('<h2 style="margin-top:0">Время сессии</h2><div class="mut">Выбери длительность. После выбора на сегодня зафиксируется, но «Старт» останется доступен.</div><div class="row" style="flex-wrap:wrap;margin:10px 0">'+opts+'</div><button class="btn sec" id="thCancel">Отмена</button>');
+ $('ov').querySelectorAll('[data-th]').forEach(b=>b.onclick=()=>{
+  const v=parseFloat(b.dataset.th);
+  S.tmH=v;S.tmDay=day();S.tmChg=day();
+  save();
+  hideOv();
+  tmUI();
+  run();
+  draw();
+ });
+ $('thCancel').onclick=hideOv;
+};
+tmUI();
+
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+if(!S.blocks){const cut=[[0,'Подготовка'],[6,'Отбор активов'],[10,'Анализ рынка'],[15,'План входа'],[18,'Риск и размер'],[24,'Дисциплина']];S.blocks=cut.map(([s,n],k)=>({n,items:ITEMS.slice(s,(cut[k+1]||[30])[0]).map((t,j)=>({id:s+j,t,hard:HARD.has(s+j)}))}))}
+S.nid=S.nid||100;save();
+let ed=false;
+function allItems(){return S.blocks.flatMap(b=>b.items)}
+function draw(){
+ const d=D(),L=$('list'),all=allItems(),locked=S.lock===day();
+ if(locked)ed=false;
+ const ok=d.c.filter(i=>all.some(x=>x.id===i));d.n=all.length;
+ const ntActive=!!d.nt;
+ const disabled=ntActive||d.closed;
+ let h='',n=0;
+ if(ntActive){
+  const violated=S.trades.filter(t=>t.d===day()).length>0;
+  h+='<div class="ntbanner'+(violated?' warn':'')+'">'+(violated?'⚠️ Вы решили не торговать, но была сделка. Штраф −'+NT_PENALTY+' ₽ и −'+NT_PENALTY_SKV+' SKV.':'🚫 На сегодня вы решили не торговать. Не нарушайте дисциплину.')+'</div>';
+ }
+ if(ed&&!disabled){S.blocks.forEach((b,bi)=>{h+='<div class="blk"><div class="row"><input type="text" data-bn="'+bi+'" value="'+esc(b.n)+'"><button class="mini" data-bdel="'+bi+'">Удалить блок</button></div>';
+  b.items.forEach((it,ii)=>{h+='<div class="row"><input type="text" data-t="'+bi+','+ii+'" value="'+esc(it.t)+'"><button class="mini'+(it.hard?' on':'')+'" data-h="'+bi+','+ii+'">★10</button><button class="mini" data-x="'+bi+','+ii+'">✕</button></div>'});
+  h+='<button class="mini" data-add="'+bi+'">+ пункт</button></div>'});
+  h+='<button class="mini" id="addB">+ блок</button><button class="btn" id="apply">Применить и зафиксировать на сегодня</button><div class="mut">После применения менять чек-лист сегодня нельзя. ★10 — сложный пункт (максимум 8).</div>'}
+ else{S.blocks.forEach(b=>{if(!b.items.length)return;h+='<h2>'+esc(b.n)+'</h2>';b.items.forEach(it=>{n++;const on=d.c.includes(it.id);const dis=disabled?' disabled':'';const r=rw(it.id);const skv=r*S.cfg.skvPerRub;h+='<div class="it'+(on?' done':'')+(it.hard?' hard':'')+(disabled?' disabled':'')+'"><input type="checkbox" id="c'+it.id+'" data-c="'+it.id+'"'+(on?' checked':'')+(dis?' disabled':'')+'><label for="c'+it.id+'">'+n+'. '+esc(it.t)+'</label><span class="rw">+'+r+' ₽</span><span class="rwskv">+'+skv+' SKV</span></div>'})});
+  if(!disabled)h+=locked?'<div class="mut" style="margin-top:10px">🔒 Чек-лист на сегодня зафиксирован</div>':'<button class="btn sec" id="edB">Изменить чек-лист</button>';
+  if(d.closed&&!ntActive)h+='<div class="mut" style="margin-top:10px">✓ День закрыт. Отметки заблокированы.</div>'}
+ L.innerHTML=h;
+ $('bar').style.width=ok.length/Math.max(1,all.length)*100+'%';
+ $('cnt').textContent=ok.length+' из '+all.length+' · ★ — сложные пункты';
+ $('sToday').textContent=todayRUB()+' ₽';
+ $('sBal').textContent=totalRUB()+' ₽';
+ $('sStreak').textContent=streak();
+ $('noTrade').textContent=d.nt?'✓ День без торговли (+10 ₽ +20 SKV) — отменить':'Сегодня не торгую — это тоже победа (+10 ₽ +20 SKV)';
+ $('closeDay').classList.toggle('hidden',ntActive||d.closed);
+ capDraw();
+}
+const L0=$('list');
+L0.addEventListener('click',e=>{const t=e.target,ds=t.dataset;let ch=1;
+ if(t.id==='edB')ed=true;else if(t.id==='addB')S.blocks.push({n:'Новый блок',items:[]});
+ else if(t.id==='apply'){S.lock=day();ed=false}
+ else if(ds.bdel!=null){if(!confirm('Удалить блок?'))return;S.blocks.splice(+ds.bdel,1)}
+ else if(ds.add!=null)S.blocks[+ds.add].items.push({id:S.nid++,t:'Новый пункт',hard:false});
+ else if(ds.x!=null){const[a,b]=ds.x.split(',');S.blocks[a].items.splice(+b,1)}
+ else if(ds.h!=null){const[a,b]=ds.h.split(','),it=S.blocks[a].items[b];if(!it.hard&&allItems().filter(x=>x.hard).length>=8)return alert('Не больше 8 сложных пунктов.');it.hard=!it.hard}
+ else ch=0;
+ if(ch){save();draw()}});
+L0.addEventListener('input',e=>{const ds=e.target.dataset;if(ds.bn!=null)S.blocks[+ds.bn].n=e.target.value;else if(ds.t!=null){const[a,b]=ds.t.split(',');S.blocks[a].items[b].t=e.target.value}save()});
+L0.addEventListener('change',e=>{const ds=e.target.dataset;if(ds.c==null)return;const d=D(),id=+ds.c;
+ if(d.nt||d.closed){e.stopImmediatePropagation();draw();return}
+ if(e.target.checked){if(!d.c.includes(id))d.c.push(id)}else d.c=d.c.filter(x=>x!==id);
+ const all=allItems();(d.h=d.h||[]).push(Math.round(d.c.filter(i=>all.some(x=>x.id===i)).length/Math.max(1,all.length)*100));save();draw()});
+
+function wk(){
+ let h='<h2 style="margin-top:0">Неделя</h2>';
+ const wkE=weekRUB(),wkS=weekSpentRUB();
+ h+='<div class="stats" style="margin:8px 0"><div><b>'+wkE+' ₽</b><span>за неделю</span></div><div><b>'+wkS+' ₽</b><span>потрачено</span></div><div><b>'+totalRUB()+' ₽</b><span>баланс</span></div></div>';
+ h+='<div class="mut">Всего заработано: <b style="color:var(--ac)">'+sumLed(l=>l.amount>0&&l.currency==='RUB')+' ₽</b> · потрачено: <b style="color:var(--bad)">'+totalSpentRUB()+' ₽</b></div>';
+ const ws=weekStartRUB();
+ for(let i=0;i<7;i++){const dt=new Date(ws);dt.setDate(dt.getDate()+i);const k=dt.toISOString().slice(0,10);
+  const dd2=S.days[k];const dsum=sumLed(l=>l.day===k&&l.currency==='RUB');
+  h+='<div class="log">'+['пн','вт','ср','чт','пт','сб','вс'][i]+' · '+(dd2&&dd2.closed?'закрыт '+(dd2.ok!=null?dd2.ok:dd2.c.length)+'/'+(dd2.n||30):(k>day()?'—':'не закрыт'))+' · <b>'+dsum+' ₽</b></div>'}
+ $('wkc').innerHTML=h;
+}
+function skvCard(){
+ const se=$('wkSkv');if(se)se.textContent=totalSKV()+' SKV';
+ const rt=$('skvRate');if(rt){
+  const r=skvRate();
+  rt.innerHTML='1 SKV ≈ '+r.toFixed(2)+' $ · за неделю: +'+sumLed(l=>l.day>=weekStartRUB()&&l.currency==='SKV')+' SKV<br><span class="mut">Курс растёт вместе с депо</span>';
+ }
+}
+function wlDraw(){const bal=totalRUB();let h='';S.wl.forEach((w,i)=>{h+='<div class="log"><b>'+esc(w.n)+'</b> · '+w.p+' ₽'+(w.b?' · ✓ куплено':'<div class="bar"><i style="width:'+Math.min(100,Math.round(bal/w.p*100))+'%"></i></div><div class="mut">Накоплено '+Math.min(bal,w.p)+' из '+w.p+' ₽</div><div class="row"><button class="mini" data-buy="'+i+'">Купил</button><button class="mini" data-wdel="'+i+'">Удалить</button></div>')+'</div>'});
+ $('wll').innerHTML=h||'<div class="mut">Список пуст.</div>'}
+function ledDraw(){const L=$('ledgerView');if(!L)return;const last=S.ledger.slice().reverse().slice(0,50);
+ L.innerHTML=last.map(l=>{
+  const isSkv=l.currency==='SKV';
+  const cls=l.amount>0?(isSkv?'skv':'pos'):'neg';
+  const unit=isSkv?' SKV':' ₽';
+  return '<div class="led"><span class="amt '+cls+'">'+(l.amount>0?'+':'')+l.amount+unit+'</span><b>'+l.type+'</b><div class="mut">'+l.day+' · '+esc(l.comment||'')+'</div></div>';
+ }).join('')||'<div class="mut">Журнал пуст</div>'}
+$('wadd').onclick=()=>{const n=$('wn').value.trim(),p=parseFloat($('wp').value);if(!n||!(p>0))return alert('Укажи название и цену');S.wl.push({n,p,b:0});$('wn').value='';$('wp').value='';save();wlDraw()};
+$('wll').addEventListener('click',e=>{const d=e.target.dataset;if(d.wdel!=null){{const wi=+d.wdel;ask('Удалить из списка?',()=>{S.wl.splice(wi,1);save();wlDraw()})}}else if(d.buy!=null){const w=S.wl[+d.buy],bal=totalRUB();if(bal<w.p)return alert('Пока не хватает '+(w.p-bal)+' ₽. Копи дальше.');ask('Купить «'+w.n+'» за '+w.p+' ₽?',()=>{addLed('spend',-w.p,'buy_'+Date.now(),'Покупка: '+w.n);w.b=1;w.bd=day();save();draw();wlDraw();wk();ledDraw()})}});
+
+const WD=['пн','вт','ср','чт','пт','сб','вс'];
+const dd=s=>new Date(s+'T00:00:00Z');
+const addD=(s,n)=>{const d=dd(s);d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10)};
+const wStart=s=>addD(s,-((dd(s).getUTCDay()+6)%7));
+S.wl=S.wl||[];
+const ov=$('ov');
+window.alert=function(m){showOv('<div style="margin-bottom:10px">'+String(m).replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</div><button class="btn" id="alOk">Понятно</button>');const b=document.getElementById('alOk');if(b)b.onclick=hideOv};
+
+function ask(m,yes){
+ // Разрешаем HTML-теги (br, b) в тексте
+ showOv('<div style="margin-bottom:15px;font-size:15px;line-height:1.5">'+m+'</div><button class="btn" id="qY">Да</button><button class="btn sec" id="qN">Отмена</button>');
+ document.getElementById('qY').onclick=()=>{hideOv();yes()};
+ document.getElementById('qN').onclick=hideOv;
+}
+function showOv(x){ov.innerHTML='<div class="card" style="max-width:520px;margin:20px auto">'+x+'</div>';ov.classList.remove('hidden');ov.scrollTop=0}
+function hideOv(){ov.classList.add('hidden');ov.innerHTML=''}
+
+function showDaySummary(isNoTrade,violated){
+ const d=D(),all=allItems();
+ const okCount=d.ok!=null?d.ok:d.c.length;
+ const totalCount=d.n||all.length;
+ const pct=Math.round(okCount/Math.max(1,totalCount)*100);
+ const earnedToday=todayRUB();
+ const earnedSkv=todaySKV();
+ const pnl=todayPnl();
+ let mood,quote;
+ if(violated){mood='Ты нарушил собственное решение. Штраф −'+NT_PENALTY+' ₽ и −'+NT_PENALTY_SKV+' SKV.';quote=pickQuote(QUOTES_VIOLATE)}
+ else if(isNoTrade){mood='Это тоже победа. Ты выбрал(а) не торговать — и это решение.';quote=pickQuote(QUOTES_NOTRADE)}
+ else if(pnl<-0.01){mood='Убыток — это часть процесса. Главное — соблюдение плана.';quote=pickQuote(QUOTES_LOSS)}
+ else if(pnl>0.01){mood='День в плюс — но важен не результат, а процесс.';quote=pickQuote(QUOTES_WIN)}
+ else{mood='Нейтральный день — тоже результат.';quote=pickQuote(QUOTES_NEUTRAL)}
+ let html='<h2 style="margin-top:0">ИТОГИ ДНЯ</h2>';
+ if(isNoTrade&&!violated){html+='<div style="font-size:32px;text-align:center;margin:8px 0">🚫</div><div class="mut" style="text-align:center">День без торговли</div>'}
+ else{html+='<div class="stats" style="margin:10px 0"><div><b>'+okCount+'/'+totalCount+'</b><span>выполнено</span></div><div><b>'+pct+'%</b><span>дисциплина</span></div><div><b>'+earnedToday+' ₽</b><span>заработано</span></div></div>'}
+ if(earnedSkv>0)html+='<div class="mut" style="margin-top:6px">SKIVCOIN за день: <b class="skvcol">+'+earnedSkv+' SKV</b></div>';
+ if(!isNoTrade&&S.trades.filter(t=>t.d===day()).length){html+='<div class="mut" style="margin-top:6px">Сделок: '+S.trades.filter(t=>t.d===day()).length+' · PnL: <b class="'+(pnl<0?'neg':'pos')+'">'+(pnl>=0?'+':'')+pnl.toFixed(2)+' $</b></div>'}
+ html+='<div class="mut" style="margin-top:8px">'+mood+'</div>';
+ html+='<div class="quotebox"><div class="label">Мысль дня</div>'+quote+'</div>';
+ html+='<button class="btn" id="sumOk">Хорошо</button>';
+ showOv(html);
+ $('sumOk').onclick=hideOv;
+}
+
+function openClose(){const d=D();if(d.closed||d.nt)return;let h='<h2 style="margin-top:0">Итог дня: что выполнено?</h2><div class="mut">Отметь честно.</div>',n=0;
+ S.blocks.forEach(b=>{if(!b.items.length)return;h+='<h2>'+esc(b.n)+'</h2>';b.items.forEach(it=>{n++;h+='<div class="it"><input type="checkbox" id="o'+it.id+'" data-o="'+it.id+'"'+(d.c.includes(it.id)?' checked':'')+'><label for="o'+it.id+'">'+n+'. '+esc(it.t)+'</label></div>'})});
+ showOv(h+'<button class="btn" id="oClose">Закрыть день</button><button class="btn sec" id="oCancel">Позже</button>')}
+$('closeDay').onclick=openClose;
+function plq(){const d=D(),p=$('plaque');if(!d.closed){p.classList.add('hidden');return}
+ const all=allItems(),ok=d.ok!=null?d.ok:d.c.length;
+ p.classList.remove('hidden');p.innerHTML='<div class="mut">Итог дня</div><div style="font-size:22px;margin:4px 0">Выполнено <b class="pos">'+ok+'</b> из '+(d.n||all.length)+'</div><div>Заработано сегодня: <b style="color:var(--y)">'+todayRUB()+' ₽</b> <b class="skvcol">+'+todaySKV()+' SKV</b></div><div class="mut">За неделю: '+weekRUB()+' ₽ · в копилке: '+totalRUB()+' ₽</div>'}
+const _dr=draw;draw=function(){_dr();plq()};
+
+ov.addEventListener('change',e=>{const o=e.target.dataset.o;if(o==null)return;const d=D(),id=+o;if(e.target.checked){if(!d.c.includes(id))d.c.push(id)}else d.c=d.c.filter(x=>x!==id)});
+ov.addEventListener('click',e=>{const id=e.target.id;
+ if(id==='oCancel')hideOv();
+ else if(id==='oClose'){
+  const d=D(),all=allItems();d.ok=d.c.filter(i=>all.some(x=>x.id===i)).length;d.n=all.length;d.closed=1;
+  (d.h=d.h||[]).push(Math.round(d.ok/Math.max(1,all.length)*100));
+  const okIds=d.c.filter(i=>all.some(x=>x.id===i));
+  const earned=okIds.reduce((a,i)=>a+rw(i),0);
+  const ref='close_'+day(),refSkv='closeskv_'+day();
+  if(!hasLed(ref)){
+   if(earned>0)addLed('day_checklist',earned,ref,'Чек-лист за '+day());
+   const skv=earned*S.cfg.skvPerRub;
+   if(skv>0)addLed('day_checklist_skv',skv,refSkv,'SKV за чек-лист','SKV');
+   if(d.ok/Math.max(1,all.length)>=S.cfg.targetDiscipline/100){
+    if(!hasLed('bonus_'+day()))addLed('day_bonus',10,'bonus_'+day(),'Бонус за дисциплину');
+    if(!hasLed('bonusskv_'+day()))addLed('day_bonus_skv',30,'bonusskv_'+day(),'SKV за дисциплину','SKV');
+   }
+  }
+  save();hideOv();draw();plq();
+  setTimeout(()=>showDaySummary(false,false),200);
+ }});
+function mon(){const ws=wStart(day()),prevWs=addD(ws,-7);if(S.askW===prevWs)return;
+ const prevStart=prevWs,prevEnd=addD(prevWs,6);
+ const prevEarned=S.ledger.filter(l=>l.day>=prevStart&&l.day<=prevEnd&&l.amount>0&&l.currency==='RUB').reduce((a,l)=>a+l.amount,0);
+ if(prevEarned<=0){S.askW=prevWs;save();return}
+ const u=S.wl.map((w,i)=>[w,i]).filter(x=>!x[0].b);
+ showOv('<h2 style="margin-top:0">Итоги прошлой недели</h2><div>Заработано за неделю: <b style="color:var(--y)">'+prevEarned+' ₽</b><br>В копилке сейчас: <b>'+totalRUB()+' ₽</b></div><div style="margin:10px 0">Потратил что-то из заработанного?</div>'+(u.length?'<select id="mSel">'+u.map(([w,i])=>'<option value="'+i+'">'+esc(w.n)+' — '+w.p+' ₽</option>').join('')+'<option value="-1">Другое</option></select>':'<input id="mAmt" type="number" placeholder="Сумма, ₽">')+'<button class="btn" id="mYes">Да</button><button class="btn sec" id="mNo">Нет, копится</button>')}
+ov.addEventListener('click',e=>{const id=e.target.id,ws=wStart(day()),prevWs=addD(ws,-7);
+ if(id==='mNo'){S.askW=prevWs;save();hideOv()}
+ else if(id==='mYes'){const selEl=$('mSel');if(selEl&&+selEl.value>=0){const i=+selEl.value,w=S.wl[i];if(totalRUB()<w.p)return alert('Не хватает '+(w.p-totalRUB())+' ₽');addLed('spend',-w.p,'buy_'+Date.now(),'Покупка: '+w.n);w.b=1;w.bd=day()}else{const a=parseFloat($('mAmt').value);if(!(a>0))return alert('Укажи сумму');if(a>totalRUB())return alert('В копилке только '+totalRUB()+' ₽');addLed('spend',-a,'sp'+Date.now(),'Трата (итог недели)')}S.askW=prevWs;save();hideOv();draw();wk();wlDraw()}});
+
+let devMode=false;
+function devMain(){
+ showOv('<h2 style="margin-top:0">⚙ Режим разработчика</h2><div class="mut">Действия необратимы.</div><div style="margin:10px 0;padding:8px;border:1px solid var(--bd);border-radius:8px;font-size:13px">Дней: '+Object.keys(S.days).length+'<br>Сделок: '+S.trades.length+'<br>Ledger: '+S.ledger.length+'<br>₽: '+totalRUB()+' · SKV: '+totalSKV()+'</div>'+
+ '<button class="btn danger" id="devResetAll">Сбросить ВСЕ данные</button>'+
+ '<button class="btn danger" id="devResetToday">Сбросить только сегодня</button>'+
+ '<button class="btn sec" id="devExport">Экспорт в CSV</button>'+
+ '<button class="btn sec" id="devExit">Выйти</button>');
+ $('devExit').addEventListener('click',()=>{devMode=false;hideOv()});
+ $('devResetToday').addEventListener('click',devConfirmToday);
+ $('devResetAll').addEventListener('click',devConfirmAll);
+ $('devExport').addEventListener('click',devExport);
+}
+function devConfirmToday(){
+ showOv('<h2 style="margin-top:0">Сбросить сегодня?</h2><div class="mut">Удалятся: чек-лист, сделки, начисления за сегодня, флаги таймера и блокировки.</div><button class="btn danger" id="dtYes">Да</button><button class="btn sec" id="dtBack">Назад</button>');
+ $('dtBack').addEventListener('click',devMain);
+ $('dtYes').addEventListener('click',()=>{
+  const dstr=day();
+  delete S.days[dstr];
+  S.trades=S.trades.filter(t=>t.d!==dstr);
+  S.ledger=S.ledger.filter(l=>l.day!==dstr);
+  S.end=0;
+  if(S.lock===dstr)S.lock=0;
+  if(S.tmChg===dstr)S.tmChg=0;
+  if(S.tmDay===dstr)S.tmDay=0;
+  if(S.askW===dstr)S.askW=0;
+  clearInterval(tInt);
+  save();
+  showOv('<h2 style="margin-top:0">✓ Готово</h2><div class="mut">Всё сброшено за сегодня.</div><button class="btn" id="dtOk">Ок</button>');
+  $('dtOk').addEventListener('click',()=>{
+   hideOv();
+   draw();
+   tmUI();
+   run();
+   tr();
+   ledDraw();
+   wk();
+  });
+ });
+}
+function devConfirmAll(){
+ showOv('<h2 style="margin-top:0">⚠️ Сброс ВСЕХ данных</h2><div class="mut">Удалятся всё: дни, сделки, ledger, копилка, SKV, капитал.</div><button class="btn danger" id="daYes">Да</button><button class="btn sec" id="daBack">Назад</button>');
+ $('daBack').addEventListener('click',devMain);
+ $('daYes').addEventListener('click',()=>{
+  showOv('<h2 style="margin-top:0">Точно?</h2><div class="mut">Второй раз спрашиваю.</div><button class="btn danger" id="daYes2">ДА</button><button class="btn sec" id="daBack2">Отмена</button>');
+  $('daBack2').addEventListener('click',devMain);
+  $('daYes2').addEventListener('click',()=>{
+   const blocks=S.blocks,tcBlocks=S.tcBlocks;
+   S={days:{},trades:[],spent:0,bonus:0,ledger:[],cap:{init:0,dep:0,wd:0},ver:3,migr2:1,migr3:1,nid:100,blocks:blocks,cfg:S.cfg,tcBlocks:tcBlocks,tc:[[],[],[]],wl:[]};
+   lid=0;
+   S.end=0;S.lock=0;S.tmChg=0;S.tmDay=0;S.askW=0;
+   clearInterval(tInt);
+   save();
+   try{localStorage.removeItem('tc')}catch(e){}
+   if(CS){try{CS.removeItem('n')}catch(e){}}
+   showOv('<h2 style="margin-top:0">✓ Сброшено</h2><div class="mut">Перезапусти приложение.</div><button class="btn" id="daOk">Ок</button>');
+   $('daOk').addEventListener('click',()=>{hideOv();draw();tmUI();run();tr();ledDraw();wk()});
+  });
+ });
+}
+function devExport(){
+ try{
+  const rows=[['date','type','currency','amount','comment']];
+  S.ledger.forEach(l=>rows.push([l.day,l.type,l.currency,l.amount,(l.comment||'').replace(/;/g,',')]));
+  rows.push([]);rows.push(['date','sym','side','pnl','earn']);
+  S.trades.forEach(t=>rows.push([t.d,t.sym,t.side,t.pnl,t.earn]));
+  const csv='\uFEFF'+rows.map(r=>r.join(';')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='trader_export_'+day()+'.csv';a.click();
+  showOv('<h2 style="margin-top:0">✓ Экспорт</h2><button class="btn" id="deOk">Ок</button>');
+  $('deOk').addEventListener('click',devMain);
+ }catch(e){showOv('<h2 style="margin-top:0">Ошибка</h2><div class="mut">'+esc(e.message)+'</div><button class="btn" id="deOk">Ок</button>');$('deOk').addEventListener('click',devMain)}
+}
+$('devOpen').onclick=()=>{
+ if(devMode){devMain();return}
+ showOv('<h2 style="margin-top:0">Режим разработчика</h2><div class="mut">Пароль: sk2024</div><input id="devPwd" type="text" placeholder="Пароль" autocomplete="off"><button class="btn" id="devGo">Войти</button><button class="btn sec" id="devCancel">Отмена</button>');
+ $('devCancel').addEventListener('click',hideOv);
+ $('devGo').addEventListener('click',()=>{
+  if($('devPwd').value===DEV_PASS){devMode=true;devMain()}
+  else{showOv('<h2 style="margin-top:0">Неверный пароль</h2><button class="btn" id="dwpOk">Ок</button>');$('dwpOk').addEventListener('click',hideOv)}
+ });
+};
+
+const TC_DEFAULT=[
+ {n:"Перед входом",items:["Могу назвать сетап: пробой или отскок.","Уровень отмечен заранее.","Есть подтверждение входа по правилам.","Определена точка отмены сценария.","Стоп установлен или будет выставлен сразу.","Определены тейк-профит и условия выхода.","Размер позиции рассчитан от допустимого риска.","Риск с учётом расходов не выше лимита.","Соотношение прибыли к риску по правилам сетапа.","Не увеличиваю позицию ради возврата убытка.","Это не эмоциональный перезаход.","Соблюдены дневной лимит и число сделок."]},
+ {n:"Во время",items:["Проверил, что стоп действительно активен.","Проверил направление и размер позиции.","Не переношу стоп дальше от точки выхода.","Не отменяю стоп из надежды на разворот.","Не увеличиваю убыточную позицию.","Не закрываю прибыль раньше плана из страха.","Не добавляю позицию без сигнала.","Не открываю сделки от скуки.","Не меняю сценарий без объективного основания.","Не решаю из-за колебаний плавающего PnL.","При достижении дневного лимита — никаких новых входов.","После закрытия записал результат и причину выхода."]},
+ {n:"Разбор",items:["Записал монету, направление и время входа.","Указал сетап: пробой или отскок.","Сохранил скриншот графика.","Записал цены входа, стопа и тейка.","Записал размер, плечо и плановый риск.","Записал результат после комиссий.","Проверил соблюдение правил входа.","Проверил, не переносил ли стоп.","Проверил, не менял ли размер эмоционально.","Отметил эмоции до, во время и после.","Записал ошибку или отсутствие нарушений.","Сформулировал один вывод на следующую сделку."]}
+];
+if(!S.tcBlocks){S.tcBlocks=TC_DEFAULT.map(b=>({n:b.n,items:b.items.map(t=>({id:'tc'+Math.random().toString(36).slice(2,8),t}))}))}
+S.tc=S.tc||[[],[],[]];
+S.tcBlocks.forEach((b,bi)=>{if(!Array.isArray(S.tc[bi]))S.tc[bi]=[]});
+let tcSel=0,tcEditMode=false;
+function tcDraw(){
+ const c=S.tc[tcSel]||[];
+ let h='';
+ S.tcBlocks.forEach((b,g)=>{
+  const open=(g===tcSel);
+  const done=S.tc[g]||[];
+  h+='<div class="tcstage'+(open?' open':'')+'"><div class="tcstage-head" data-tcs="'+g+'"><b>'+esc(b.n)+' <span class="mut">'+done.length+'/'+b.items.length+'</span></b><span class="tog">'+(open?'▲':'▼')+'</span></div><div class="tcstage-body">';
+  if(open){
+   if(!tcEditMode){
+    if(g===0&&done.length<b.items.length)h+='<div class="neg" style="margin:6px 0"><b>Вход не подтверждён</b></div>';
+    if(g===0&&done.length===b.items.length&&b.items.length>0)h+='<div class="pos" style="margin:6px 0">Чек-лист пройден</div>';
+    h+='<div class="mut" style="margin:6px 0">Выполнено: <b class="rwbig">'+done.length+'/'+b.items.length+' · +'+done.length+' ₽ · +'+(done.length*10)+' SKV</b></div>';
+    b.items.forEach((it,i)=>{const on=done.includes(it.id);h+='<div class="it'+(on?' done':'')+'"><input type="checkbox" data-tci="'+i+'"'+(on?' checked':'')+'><label>'+(i+1)+'. '+esc(it.t)+'</label><span class="rwskv">+10 SKV</span></div>'});
+   } else {
+    b.items.forEach((it,i)=>{h+='<div class="row"><input type="text" data-tct="'+i+'" value="'+esc(it.t)+'"><button class="mini" data-tcx="'+i+'">✕</button></div>'});
+    h+='<button class="mini" data-tcadd="1">+ пункт</button>';
+   }
+  }
+  h+='</div></div>';
+ });
+ $('tcl').innerHTML=h;
+}
+$('tcl').addEventListener('click',e=>{
+ const t=e.target,ds=t.dataset;
+ if(ds.tcs!=null){tcSel=+ds.tcs;tcEditMode=false;$('tcEdit').textContent='✎ Изменить';tcDraw();return}
+ if(tcEditMode){
+  if(ds.tcx!=null){S.tcBlocks[tcSel].items.splice(+ds.tcx,1);save();tcDraw();return}
+  if(ds.tcadd!=null){S.tcBlocks[tcSel].items.push({id:'tc'+Math.random().toString(36).slice(2,8),t:'Новый пункт'});save();tcDraw();return}
+ }
+});
+$('tcl').addEventListener('input',e=>{
+ const ds=e.target.dataset;
+ if(tcEditMode&&ds.tct!=null){S.tcBlocks[tcSel].items[+ds.tct].t=e.target.value;save()}
+});
+$('tcl').addEventListener('change',e=>{
+ const ds=e.target.dataset;
+ if(ds.tci==null||tcEditMode)return;
+ const i=+ds.tci;
+ const it=S.tcBlocks[tcSel].items[i];
+ if(!it)return;
+ const cur=S.tc[tcSel]||[];
+ if(e.target.checked){if(!cur.includes(it.id))cur.push(it.id)}
+ else{const p=cur.indexOf(it.id);if(p>=0)cur.splice(p,1)}
+ S.tc[tcSel]=cur;save();tcDraw();
+});
+$('tcEdit').onclick=()=>{tcEditMode=!tcEditMode;$('tcEdit').textContent=tcEditMode?'✓ Готово':'✎ Изменить';tcDraw()};
+$('tcReset').onclick=()=>{S.tc=S.tcBlocks.map(()=>[]);tcEditMode=false;$('tcEdit').textContent='✎ Изменить';save();tcDraw()};
+tcDraw();
+
+run();show(0);draw();mon();capDraw();
+
+}
+let booted=false;const once=v=>{if(!booted){booted=true;boot(v)}};
+(function start(){let local='';try{local=localStorage.getItem('tc')||''}catch(e){}
+ if(!CS){once(local);return}
+ setTimeout(()=>once(local),3000);
+ try{CS.getItem('n',(e,n)=>{n=parseInt(n)||0;if(!n){once(local);return}
+  const keys=[...Array(n).keys()].map(i=>'p'+i);
+  CS.getItems(keys,(e2,r)=>{let pick=local;try{const cloud=keys.map(k=>r[k]).join('');if((JSON.parse(cloud).ts||0)>(JSON.parse(local||'{}').ts||0))pick=cloud}catch(x){}once(pick)})})}catch(e){once(local)}
+})();
+</script></body></html>
